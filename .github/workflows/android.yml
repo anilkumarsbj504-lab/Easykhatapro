@@ -1,1 +1,49 @@
+name: Build EasyKhataPro APK
 
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'EasyKhataPro_Android_Project.zip'
+      - '.github/workflows/android.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract Android project
+        run: |
+          mkdir -p android-project
+          unzip -q EasyKhataPro_Android_Project.zip -d android-project
+          find android-project -name settings.gradle -o -name settings.gradle.kts
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install SDK
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Build APK
+        working-directory: android-project/EasyKhataPro_Android_Project
+        run: gradle assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: EasyKhataPro-APK
+          path: '**/app/build/outputs/apk/debug/app-debug.apk'
